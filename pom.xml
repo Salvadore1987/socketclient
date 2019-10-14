@@ -61,17 +61,22 @@
             <artifactId>jssc</artifactId>
             <version>2.8.0</version>
         </dependency>
+        <dependency>
+            <groupId>uz.asbt.passport</groupId>
+            <artifactId>jmrtd-library</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>socket-client</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <finalName>socket-client</finalName>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
 
 
 </project>

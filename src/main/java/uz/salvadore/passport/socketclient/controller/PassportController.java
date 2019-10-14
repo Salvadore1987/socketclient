@@ -2,33 +2,36 @@ package uz.salvadore.passport.socketclient.controller;
 
 import jssc.SerialPortException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.salvadore.passport.socketclient.model.PassportData;
-import uz.salvadore.passport.socketclient.model.rest.MRZRequest;
-import uz.salvadore.passport.socketclient.model.rest.Response;
-import uz.salvadore.passport.socketclient.service.Scanner;
+import uz.asbt.passport.jmrtdlibrary.exception.JMRTDException;
+import uz.asbt.passport.jmrtdlibrary.model.DeviceInfo;
+import uz.asbt.passport.jmrtdlibrary.model.PassportData;
+import uz.asbt.passport.jmrtdlibrary.model.rest.MRZRequest;
+import uz.asbt.passport.jmrtdlibrary.model.rest.Response;
+import uz.asbt.passport.jmrtdlibrary.service.Scanner;
+import uz.asbt.passport.jmrtdlibrary.service.impl.ScannerImpl;
+import uz.salvadore.passport.socketclient.model.Passport;
 
 @Slf4j
 @RestController
 @RequestMapping("/passport/")
 public class PassportController {
 
-    @Autowired
-    private Scanner scanner;
-
-    @RequestMapping(value = "info/", method = RequestMethod.GET)
-    public ResponseEntity<Response<PassportData>> info() {
-        Response<PassportData> response = new Response<>();
+    @RequestMapping(value = "info/elyctis", method = RequestMethod.GET)
+    public ResponseEntity<Response<Passport>> info() {
+        Response<Passport> response = new Response<>();
         try {
-            PassportData passportData = scanner.scan();
-            if (null == passportData)
+            Passport passport;
+            try (Scanner scanner = new ScannerImpl()) {
+                passport = Passport.Builder.build(scanner.scan(null));
+            }
+            if (null == passport)
                 throw new Exception("Can't read passport data");
             response.setCode(HttpStatus.OK.value());
             response.setMessage("OK");
-            response.setResponse(passportData);
+            response.setResponse(passport);
         } catch (SerialPortException ex) {
             log.error(ex.getMessage());
             response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -41,16 +44,42 @@ public class PassportController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "info", method = RequestMethod.POST)
-    public ResponseEntity<Response<PassportData>> info(@RequestBody MRZRequest request) {
-        Response<PassportData> response = new Response<>();
+    @RequestMapping(value = "device", method = RequestMethod.GET)
+    public ResponseEntity<Response<DeviceInfo>> deviceInfo() {
+        Response<DeviceInfo> response = new Response<>();
         try {
-            PassportData passportData = scanner.scan(request);
-            if (null == passportData)
+            DeviceInfo deviceInfo;
+            try (Scanner scanner = new ScannerImpl()){
+                deviceInfo = scanner.info();
+            }
+            response.setCode(0);
+            response.setMessage("OK");
+            response.setResponse(deviceInfo);
+        } catch (JMRTDException ex) {
+            log.error(ex.getMessage());
+            response.setCode(ex.getCode());
+            response.setMessage(ex.getMessage());
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            response.setCode(-1);
+            response.setMessage(ex.getMessage());
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(value = "info", method = RequestMethod.POST)
+    public ResponseEntity<Response<Passport>> info(@RequestBody MRZRequest request) {
+        Response<Passport> response = new Response<>();
+        try {
+            Passport passport;
+            try (Scanner scanner = new ScannerImpl()) {
+                passport = Passport.Builder.build(scanner.scan(request, null));
+            }
+            if (null == passport)
                 throw new Exception("Can't read passport data");
             response.setCode(HttpStatus.OK.value());
             response.setMessage("OK");
-            response.setResponse(passportData);
+            response.setResponse(passport);
         } catch (SerialPortException ex) {
             log.error(ex.getMessage());
             response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
