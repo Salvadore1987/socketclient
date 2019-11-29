@@ -1,17 +1,16 @@
 package uz.salvadore.passport.socketclient.controller;
 
-import jssc.SerialPortException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.asbt.passport.jmrtdlibrary.exception.JMRTDException;
 import uz.asbt.passport.jmrtdlibrary.model.DeviceInfo;
-import uz.asbt.passport.jmrtdlibrary.model.PassportData;
 import uz.asbt.passport.jmrtdlibrary.model.rest.MRZRequest;
 import uz.asbt.passport.jmrtdlibrary.model.rest.Response;
 import uz.asbt.passport.jmrtdlibrary.service.Scanner;
 import uz.asbt.passport.jmrtdlibrary.service.impl.ScannerImpl;
+import uz.salvadore.passport.socketclient.exception.CustomException;
 import uz.salvadore.passport.socketclient.model.Passport;
 
 @Slf4j
@@ -23,19 +22,17 @@ public class PassportController {
     public ResponseEntity<Response<Passport>> info() {
         Response<Passport> response = new Response<>();
         try {
-            Passport passport;
-            try (Scanner scanner = new ScannerImpl()) {
-                passport = Passport.Builder.build(scanner.scan(null));
-            }
+            Scanner scanner = new ScannerImpl();
+            Passport passport = Passport.Builder.build(scanner.scan(null, 2000));
             if (null == passport)
-                throw new Exception("Can't read passport data");
+                throw new CustomException(100, "Can't read passport data");
             response.setCode(HttpStatus.OK.value());
             response.setMessage("OK");
             response.setResponse(passport);
-        } catch (SerialPortException ex) {
+        } catch (JMRTDException ex) {
             log.error(ex.getMessage());
-            response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setMessage("Can't opened or close COM port");
+            response.setCode(ex.getCode());
+            response.setMessage(ex.getMessage());
         } catch (Exception ex) {
             log.error(ex.getMessage());
             response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -48,10 +45,8 @@ public class PassportController {
     public ResponseEntity<Response<DeviceInfo>> deviceInfo() {
         Response<DeviceInfo> response = new Response<>();
         try {
-            DeviceInfo deviceInfo;
-            try (Scanner scanner = new ScannerImpl()){
-                deviceInfo = scanner.info();
-            }
+            Scanner scanner = new ScannerImpl();
+            DeviceInfo deviceInfo = scanner.info(1000);
             response.setCode(0);
             response.setMessage("OK");
             response.setResponse(deviceInfo);
@@ -71,19 +66,17 @@ public class PassportController {
     public ResponseEntity<Response<Passport>> info(@RequestBody MRZRequest request) {
         Response<Passport> response = new Response<>();
         try {
-            Passport passport;
-            try (Scanner scanner = new ScannerImpl()) {
-                passport = Passport.Builder.build(scanner.scan(request, null));
-            }
+            Scanner scanner = new ScannerImpl();
+            Passport passport = Passport.Builder.build(scanner.scan(request, null, 2000));
             if (null == passport)
-                throw new Exception("Can't read passport data");
+                throw new CustomException(100, "Can't read passport data");
             response.setCode(HttpStatus.OK.value());
             response.setMessage("OK");
             response.setResponse(passport);
-        } catch (SerialPortException ex) {
+        } catch (JMRTDException ex) {
             log.error(ex.getMessage());
-            response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.setMessage("Can't opened or close COM port");
+            response.setCode(ex.getCode());
+            response.setMessage(ex.getMessage());
         } catch (Exception ex) {
             log.error(ex.getMessage());
             response.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
