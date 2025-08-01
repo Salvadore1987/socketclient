@@ -1,6 +1,6 @@
 package uz.salvadore.passport.socketclient.exception;
 
-public class CustomException extends Exception {
+public class CustomException extends RuntimeException {
 
     private int code;
 

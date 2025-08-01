@@ -13,9 +13,6 @@ public class JsonDateSerializer  extends JsonSerializer<Date> {
 
     private final DateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
 
-    public JsonDateSerializer() {
-    }
-
     public void serialize(Date date, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeString(this.formatter.format(date));
     }
